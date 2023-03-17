@@ -15,13 +15,13 @@ function readStorage() {
       email: "",
       message: ""
   };
-  if(storageRawData){
+  if(storageRawData) {
       try{
           const parsedData = JSON.parse(storageRawData);
-          Object.keys(formData).forEach((key) =>{
+          Object.keys(formData).forEach((key) => {
               formData[key] = parsedData[key];
           });
-      } catch(exc){
+      } catch(exc) {
           console.warn(exc);
       }
   }
@@ -31,7 +31,7 @@ function readStorage() {
 function onFormSubmit(e) {
   const formData = readStorage();
   e.preventDefault();
-  if(!validate(e.currentTarget)){
+  if(!validate(e.currentTarget)) {
     return ;
   }
   clearInputs(e.currentTarget);
@@ -43,14 +43,14 @@ function onFormSubmit(e) {
 function onInput(e) {
   const formData = readStorage();
   formData[e.target.name] = e.target.value;
-  if(validateEmpty(e.target)){
+  if(validateEmpty(e.target)) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(formData));
   }
 }
 
 function getStorageItems() {
   const formData = readStorage();
-  Object.keys(formData).forEach((key) =>{
+  Object.keys(formData).forEach((key) => {
       const elem = document.querySelector(`[name="${key}"]`);
       if(elem) {
           elem.value = formData[key];
@@ -62,7 +62,7 @@ function validateEmpty(elem) {
     const isEmpty = (elem.value.trim() === '');
     const elemChildren = elem.parentNode.children;
     if( elemChildren.length > 1
-              && elemChildren[1].classList.contains("error-msg") ){
+              && elemChildren[1].classList.contains("error-msg")) {
       elemChildren[1].remove();
     }
     if(isEmpty) {
