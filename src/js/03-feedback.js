@@ -1,59 +1,97 @@
 import throttle from 'lodash.throttle';
 
 const STORAGE_KEY = 'feedback-form-state';
-let formData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
-
-const formEl = document.querySelector('form');
-const formInputEl = document.querySelector('input');
-const formTextareaEl = document.querySelector('textarea');
-// const formSubmitBtnEl = document.querySelector('button');
+const formEl = document.querySelector("form");
 
 formEl.addEventListener('submit',onFormSubmit);
 formEl.addEventListener('input',throttle(onInput, 500));
 
 getStorageItems();
 
-function onFormSubmit(event) {
-  event.preventDefault();
 
-  if (event.target.elements.email.value && event.target.elements.message.value) {
-    console.log('Відправляємо форму');
-    console.log(JSON.parse(localStorage.getItem(STORAGE_KEY)));
-
-    event.currentTarget.reset();
-    localStorage.removeItem(STORAGE_KEY);
-    formData = {};
-  } else {
-    alert('заповни всі поля форми!');
+function readStorage() {
+  const storageRawData = localStorage.getItem(STORAGE_KEY);
+  const formData = {
+      email: "",
+      message: ""
+  };
+  if(storageRawData){
+      try{
+          const parsedData = JSON.parse(storageRawData);
+          Object.keys(formData).forEach((key) =>{
+              formData[key] = parsedData[key];
+          });
+      } catch(exc){
+          console.warn(exc);
+      }
   }
+  return formData;
 }
 
-function onInput(event) {
-  // const message = event.target.value;
+function onFormSubmit(e) {
+  const formData = readStorage();
+  e.preventDefault();
+  if(!validate(e.currentTarget)){
+    return ;
+  }
+  clearInputs(e.currentTarget);
+  console.log(formData);
+  localStorage.removeItem(STORAGE_KEY);
+  console.log('localStorage[STORAGE_KEY] was removed')
+}
 
-  // console.log(message);
-
-  // localStorage.setItem(STORAGE_KEY, message);
-
-  formData[event.target.name] = event.target.value;
-
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(formData));
+function onInput(e) {
+  const formData = readStorage();
+  formData[e.target.name] = e.target.value;
+  if(validateEmpty(e.target)){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(formData));
+  }
 }
 
 function getStorageItems() {
-  // const savedMessage = localStorage.getItem(STORAGE_KEY);
-
-  // if (savedMessage) {
-  //   console.log(savedMessage);
-  //   formTextareaEl.value = savedMessage;
-  // }
-
-  const storageItem = JSON.parse(localStorage.getItem(STORAGE_KEY));
-
-  if (storageItem) {
-    console.log(storageItem);
-    formInputEl.value = storageItem.email || '';
-    formTextareaEl.value = storageItem.message || '';
-    console.log(storageItem);
-  }
+  const formData = readStorage();
+  Object.keys(formData).forEach((key) =>{
+      const elem = document.querySelector(`[name="${key}"]`);
+      if(elem) {
+          elem.value = formData[key];
+      }
+  });
 }
+
+function validateEmpty(elem) {
+    const isEmpty = (elem.value.trim() === '');
+    const elemChildren = elem.parentNode.children;
+    if( elemChildren.length > 1
+              && elemChildren[1].classList.contains("error-msg") ){
+      elemChildren[1].remove();
+    }
+    if(isEmpty) {
+      const elemMsg = document.createElement("SPAN");
+      elemMsg.classList.add('error-msg');
+      elemMsg.style.fontSize = '15px';
+      elemMsg.textContent = 'Заповни всі поля форми!';
+      elem.parentNode.append(elemMsg);
+    }
+    return !isEmpty;
+}
+
+function validate(formEl) {
+    const elements = formEl.elements;
+    const formData = readStorage();
+    const allFilled = Object.keys(formData).reduce((acc, key) => {
+      const isEmpty = !validateEmpty(elements[key]);
+      return (acc && (!isEmpty));
+    }, true);
+    return allFilled;
+}
+
+function clearInputs(formEl) {
+    const elements = formEl.elements;
+    const formData = readStorage();
+    const allFilled = Object.keys(formData).forEach((key) => {
+      elements[key].value = '';
+    });
+}
+
+
+
